@@ -1,4 +1,4 @@
-fastled/FastLED@^3.7.6
+bblanchon/ArduinoJson@^7.2.0
 arduino-libraries/NTPClient@^3.2.1
-bblanchon/ArduinoJson@^7.1.0
+fastled/FastLED@^3.7.6
 fmalpartida/LiquidCrystal@^1.5.0

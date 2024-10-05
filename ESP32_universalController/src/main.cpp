@@ -1,5 +1,6 @@
 //main.cpp
 #include <Arduino.h>
+#include "customBoard.h"
 #include <esp_task_wdt.h>
 #include "dto.h"
 #include <EEPROM.h>
@@ -29,7 +30,7 @@ NTPClient timeClient(ntpUDP, ntpServers[0], utcOffsetInSeconds);
 WiFiUDP udp;
 const char* udpAddress = "192.168.1.255";  // IP-адреса отримувача
 
-const int udpRxPort = 5006;  // UDP RX port
+const int udpRxPort = 5005;  // UDP RX port
 char incomingPacket[1024];
 SystemSetup sysSetupStruc;
 HTTPClient client;
@@ -41,8 +42,6 @@ WiFiServer serverConfigured(80);
 
 uint16_t jobPrescaler;
 uint16_t lcdPrescaler;
-
-
 
 
 void setup() {
@@ -112,7 +111,6 @@ void setup() {
       pullMsg(1, charBuff, 1);
    
       Serial.println(WiFi.localIP());
-      udp.begin(udpRxPort);
     }
 
     delay(2000);
@@ -120,20 +118,20 @@ void setup() {
     udp.begin(udpRxPort);
 
     serverConfigured.begin();
-
+    sysSetupUpdate(sysSetupStruc);
 }
 
 void loop() {
 
  WiFiClient client = serverConfigured.available();  // Очікуємо нових клієнтів
   if (client) {
-    Serial.println("New Client.");
+    //Serial.println("New Client.");
     String currentLine = "";
     String header = "";
     while (client.connected()) {
       if (client.available()) {
         char c = client.read();
-        Serial.write(c);
+        //Serial.write(c);
         header += c;
 
         if (c == '\n') {
@@ -191,7 +189,7 @@ void loop() {
               }
               EEPROM.put(0, sysSetupStruc);
               EEPROM.commit();
-
+              sysSetupUpdate(sysSetupStruc);
               client.println("HTTP/1.1 200 OK");
               client.println("Content-type:text/plain");
               client.println("Connection: close");
@@ -214,23 +212,21 @@ void loop() {
       }
     }
     client.stop();
-    Serial.println("Client disconnected.");
   }
   
   if(jobPrescaler == 0){
     if (WiFi.status() == WL_CONNECTED) {  
       
       digitalWrite(Wifi_LED, HIGH);
-      Serial.println("Connected");
       timeClient.update();
-      Serial.print("Current time (NTP): ");
-      Serial.println(timeClient.getFormattedTime());
+      //Serial.print("Current time (NTP): ");
+      //Serial.println(timeClient.getFormattedTime());
       configTime(utcOffsetInSeconds, 0, ntpServers[0]);
       
       if (!getLocalTime(&timeinfo)) {
         Serial.println("Failed to obtain time");
       }
-        Serial.println(&timeinfo, "Current time (RTC): %H:%M:%S");
+        //Serial.println(&timeinfo, "Current time (RTC): %H:%M:%S");
             
         //const char *message = "Hello, UDP!";
         //udp.beginPacket(udpAddress, udpTxPort);
@@ -256,8 +252,8 @@ void loop() {
       if (len > 0) {
         incomingPacket[len] = 0; 
       }
-      Serial.printf("Received: %s\n", incomingPacket);
-
+      //Serial.printf("Received: %s\n", incomingPacket);
+      energyReportJson(incomingPacket);
     
     }
   }
